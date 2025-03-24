@@ -149,7 +149,7 @@ async function run() {
         });
 
         // 🚀 Create User API
-        app.post('/api/users', async (req, res) => {
+        app.post('/api/users/create', async (req, res) => {
             try {
                 const { name, email, password, profileImg, god_access } = req.body;
 
