@@ -26,6 +26,7 @@ async function run() {
         const surveyCollection = db.collection("surveys");
         const responsesCollection = db.collection("responses");
         const userCollection = db.collection("users");
+        const feedbackCollection = db.collection("feedbacks");
 
         // 🚀 Create Survey API
         app.post("/api/surveys", async (req, res) => {
@@ -183,6 +184,43 @@ async function run() {
                 res.status(500).json({ success: false, message: "Failed to create user." });
             }
         });
+        app.post("/api/feedback", async (req, res) => {
+            try {
+                const { username, email, rating, topic, technical_issue, profileImg } = req.body;
+        
+                // Validation
+                if (!username || !email || !rating || !topic) {
+                    return res.status(400).json({ success: false, message: "Missing required fields (username, email, rating, topic)." });
+                }
+        
+                const newFeedback = {
+                    username,
+                    email,
+                    rating,
+                    topic,
+                    technical_issue: technical_issue || false, // Default false if not provided
+                    profileImg: profileImg || null, // Optional
+                    submittedAt: new Date(),
+                };
+        
+                const result = await feedbackCollection.insertOne(newFeedback);
+                res.status(201).json({ success: true, message: "Feedback submitted successfully!", feedbackId: result.insertedId });
+            } catch (error) {
+                console.error("Error submitting feedback:", error);
+                res.status(500).json({ success: false, message: "Failed to submit feedback." });
+            }
+        });
+        
+        app.get("/api/feedback", async (req, res) => {
+            try {
+                const feedbacks = await feedbackCollection.find().toArray();
+                res.status(200).json({ success: true, feedbacks });
+            } catch (error) {
+                console.error("Error fetching feedbacks:", error);
+                res.status(500).json({ success: false, message: "Failed to fetch feedbacks." });
+            }
+        });
+        
 
 
 
