@@ -185,31 +185,32 @@ async function run() {
             }
         });
         app.post("/api/feedback", async (req, res) => {
-            try {
-                const { username, email, rating, topic, technical_issue, profileImg } = req.body;
-        
-                // Validation
-                if (!username || !email || !rating || !topic) {
-                    return res.status(400).json({ success: false, message: "Missing required fields (username, email, rating, topic)." });
-                }
-        
-                const newFeedback = {
-                    username,
-                    email,
-                    rating,
-                    topic,
-                    technical_issue: technical_issue || false, // Default false if not provided
-                    profileImg: profileImg || null, // Optional
-                    submittedAt: new Date(),
-                };
-        
-                const result = await feedbackCollection.insertOne(newFeedback);
-                res.status(201).json({ success: true, message: "Feedback submitted successfully!", feedbackId: result.insertedId });
-            } catch (error) {
-                console.error("Error submitting feedback:", error);
-                res.status(500).json({ success: false, message: "Failed to submit feedback." });
-            }
-        });
+  try {
+    const { postedBy, profileImg, ratings, feedback, postedDate, isTechnicalIssue, topic } = req.body;
+
+    // Validation
+    if (!postedBy || !ratings || !feedback || !topic) {
+      return res.status(400).json({ success: false, message: "Missing required fields (postedBy, ratings, feedback, topic)." });
+    }
+
+    const newFeedback = {
+      postedBy,
+      profileImg: profileImg || null,
+      ratings,
+      feedback,
+      postedDate: postedDate ? new Date(postedDate) : new Date(),
+      isTechnicalIssue: isTechnicalIssue || false,
+      topic,
+    };
+
+    const result = await feedbackCollection.insertOne(newFeedback);
+    res.status(201).json({ success: true, message: "Feedback submitted successfully!", feedback: { ...newFeedback, _id: result.insertedId } });
+  } catch (error) {
+    console.error("Error submitting feedback:", error);
+    res.status(500).json({ success: false, message: "Failed to submit feedback." });
+  }
+});
+
         
         app.get("/api/feedback", async (req, res) => {
             try {
