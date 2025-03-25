@@ -181,12 +181,13 @@ async function run() {
                 if (existingUser) {
                     return res.status(400).json({ success: false, message: "User with this email already exists." });
                 }
+                const hashedPassword = await bcrypt.hash(password, 10);
 
                 // Create new user object
                 const newUser = {
                     name,
                     email,
-                    password,
+                    password:hashedPassword,
                     profileImg,
                     god_access: god_access || false // default to false if not provided
                 };
