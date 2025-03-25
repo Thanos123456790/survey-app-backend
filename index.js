@@ -184,34 +184,96 @@ async function run() {
                 res.status(500).json({ success: false, message: "Failed to create user." });
             }
         });
+
+        // 🚀 User Registration API
+        app.post('/api/users/register', async (req, res) => {
+            try {
+                const { name, email, password, profileImg, god_access } = req.body;
+
+                // Validation
+                if (!name || !email || !password) {
+                    return res.status(400).json({ success: false, message: "All fields (name, email, password) are required." });
+                }
+
+                // Check if user already exists
+                const existingUser = await userCollection.findOne({ email });
+                if (existingUser) {
+                    return res.status(400).json({ success: false, message: "User with this email already exists." });
+                }
+
+                // Hashing password for security
+                const hashedPassword = await bcrypt.hash(password, 10);
+
+                // Create new user object
+                const newUser = {
+                    name,
+                    email,
+                    password: hashedPassword, // Store hashed password
+                    profileImg: profileImg || null,
+                    god_access: god_access || false // Default to false
+                };
+
+                // Insert user into DB
+                const result = await userCollection.insertOne(newUser);
+
+                res.status(201).json({ success: true, message: "User registered successfully!", userId: result.insertedId });
+            } catch (error) {
+                console.error("Error registering user:", error);
+                res.status(500).json({ success: false, message: "Failed to register user." });
+            }
+        });
+
+        // 🚀 Provider Login API
+        app.post('/api/providers/login', async (req, res) => {
+            try {
+                const { email, password } = req.body;
+
+                // Check if provider exists
+                const provider = await userCollection.findOne({ email });
+                if (!provider) {
+                    return res.status(401).json({ success: false, message: "Provider not found." });
+                }
+
+                // Validate password
+                const isValidPassword = await bcrypt.compare(password, provider.password);
+                if (!isValidPassword) {
+                    return res.status(401).json({ success: false, message: "Invalid credentials." });
+                }
+
+                res.status(200).json({ success: true, message: "Provider login successful!", provider });
+            } catch (error) {
+                console.error("Error in provider login:", error);
+                res.status(500).json({ success: false, message: "Failed to log in provider." });
+            }
+        });
+
         app.post("/api/feedback", async (req, res) => {
-  try {
-    const { postedBy, profileImg, ratings, feedback, postedDate, isTechnicalIssue, topic } = req.body;
+            try {
+                const { username, email, rating, topic, technical_issue, profileImg } = req.body;
 
-    // Validation
-    if (!postedBy || !ratings || !feedback || !topic) {
-      return res.status(400).json({ success: false, message: "Missing required fields (postedBy, ratings, feedback, topic)." });
-    }
+                // Validation
+                if (!username || !email || !rating || !topic) {
+                    return res.status(400).json({ success: false, message: "Missing required fields (username, email, rating, topic)." });
+                }
 
-    const newFeedback = {
-      postedBy,
-      profileImg: profileImg || null,
-      ratings,
-      feedback,
-      postedDate: postedDate ? new Date(postedDate) : new Date(),
-      isTechnicalIssue: isTechnicalIssue || false,
-      topic,
-    };
+                const newFeedback = {
+                    username,
+                    email,
+                    rating,
+                    topic,
+                    technical_issue: technical_issue || false,
+                    profileImg: profileImg || null,
+                    submittedAt: new Date(),
+                };
 
-    const result = await feedbackCollection.insertOne(newFeedback);
-    res.status(201).json({ success: true, message: "Feedback submitted successfully!", feedback: { ...newFeedback, _id: result.insertedId } });
-  } catch (error) {
-    console.error("Error submitting feedback:", error);
-    res.status(500).json({ success: false, message: "Failed to submit feedback." });
-  }
-});
+                const result = await feedbackCollection.insertOne(newFeedback);
+                res.status(201).json({ success: true, message: "Feedback submitted successfully!", feedbackId: result.insertedId });
+            } catch (error) {
+                console.error("Error submitting feedback:", error);
+                res.status(500).json({ success: false, message: "Failed to submit feedback." });
+            }
+        });
 
-        
         app.get("/api/feedback", async (req, res) => {
             try {
                 const feedbacks = await feedbackCollection.find().toArray();
@@ -221,7 +283,7 @@ async function run() {
                 res.status(500).json({ success: false, message: "Failed to fetch feedbacks." });
             }
         });
-        
+
 
 
 
