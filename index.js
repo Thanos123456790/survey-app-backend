@@ -155,7 +155,7 @@ async function run() {
                         return res.status(401).json({ success: false, message: 'Invalid credentials' });
                     }
                 }else{
-                    return res.status(401).json({ success: false, message: 'Invalid credentials' });
+                    res.json({ success: true, user });
                 }
                 res.json({ success: true, user });
             } catch (error) {
