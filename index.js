@@ -1,6 +1,7 @@
 // Existing imports and setup
 const express = require("express");
 const cors = require("cors");
+const bcrypt = require("bcrypt");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
@@ -208,9 +209,9 @@ async function run() {
                 const newUser = {
                     name,
                     email,
-                    password: hashedPassword, // Store hashed password
+                    password: hashedPassword,
                     profileImg: profileImg || null,
-                    god_access: god_access || false // Default to false
+                    god_access: god_access || false
                 };
 
                 // Insert user into DB
