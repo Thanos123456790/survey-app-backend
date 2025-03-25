@@ -149,11 +149,14 @@ async function run() {
                 }
         
                 // Compare hashed password
-                const isPasswordValid = await bcrypt.compare(password, user.password);
-                if (!isPasswordValid) {
+                if(user.passeord !== password){
+                    const isPasswordValid = await bcrypt.compare(password, user.password);
+                    if (!isPasswordValid) {
+                        return res.status(401).json({ success: false, message: 'Invalid credentials' });
+                    }
+                }else{
                     return res.status(401).json({ success: false, message: 'Invalid credentials' });
                 }
-        
                 res.json({ success: true, user });
             } catch (error) {
                 console.error("Error logging in:", error);
