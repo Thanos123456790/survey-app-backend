@@ -139,16 +139,28 @@ async function run() {
         });
 
         app.post('/api/users/login', async (req, res) => {
-            const { email, password } = req.body;
-
-            const user = await userCollection.findOne({ email });
-
-            if (!user || user.password !== password) {
-                return res.status(401).json({ success: false, message: 'Invalid credentials' });
+            try {
+                const { email, password } = req.body;
+        
+                // Find user by email
+                const user = await userCollection.findOne({ email });
+                if (!user) {
+                    return res.status(401).json({ success: false, message: 'Invalid credentials' });
+                }
+        
+                // Compare hashed password
+                const isPasswordValid = await bcrypt.compare(password, user.password);
+                if (!isPasswordValid) {
+                    return res.status(401).json({ success: false, message: 'Invalid credentials' });
+                }
+        
+                res.json({ success: true, user });
+            } catch (error) {
+                console.error("Error logging in:", error);
+                res.status(500).json({ success: false, message: "Failed to log in." });
             }
-
-            res.json({ success: true, user });
         });
+        
 
         // 🚀 Create User API
         app.post('/api/users/create', async (req, res) => {
