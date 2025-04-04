@@ -128,6 +128,26 @@ async function run() {
             }
         });
 
+
+        // Delete survey by id
+        app.delete("/api/surveys/:id", async (req, res) => {
+            try {
+                const surveyId = req.params.id;
+                const result = await surveyCollection.deleteOne(
+                    { _id: new ObjectId(surveyId) }
+                );
+
+                if (result.matchedCount === 0) {
+                    return res.status(404).json({ error: "Survey not found" });
+                }
+
+                res.status(200).json({ message: "Survey deleted successfully!" });
+            } catch (error) {
+                console.error("Error deleting survey:", error);
+                res.status(500).json({ error: "Failed to delete survey" });
+            }
+        });
+
         app.get('/api/users', async (req, res) => {
             const email = req.query.email;
             const response = await userCollection.findOne({ email });
@@ -149,18 +169,20 @@ async function run() {
                 }
         
                 // Compare hashed password
-                if(user.password !== password){
+                if(user.password === password){
+                    return res.json({ success: true, user });
+                }else if(user.password !== password){
                     const isPasswordValid = await bcrypt.compare(password, user.password);
                     if (!isPasswordValid) {
                         return res.status(401).json({ success: false, message: 'Invalid credentials' });
                     }
-                }else{
-                    res.json({ success: true, user });
+                }else {
+                    return res.status(401).json({ success: false, message: 'Invalid credentials' });
                 }
-                res.json({ success: true, user });
+                return res.json({ success: true, user });
             } catch (error) {
                 console.error("Error logging in:", error);
-                res.status(500).json({ success: false, message: "Failed to log in." });
+                return res.status(500).json({ success: false, message: "Failed to log in." });
             }
         });
         
@@ -181,13 +203,12 @@ async function run() {
                 if (existingUser) {
                     return res.status(400).json({ success: false, message: "User with this email already exists." });
                 }
-                const hashedPassword = await bcrypt.hash(password, 10);
 
                 // Create new user object
                 const newUser = {
                     name,
                     email,
-                    password:hashedPassword,
+                    password,
                     profileImg,
                     god_access: god_access || false // default to false if not provided
                 };
